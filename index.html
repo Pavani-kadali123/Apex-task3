@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Food Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #fdf6ec; /* New soft creamy beige background */
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      color: #d35400;
+      margin-bottom: 10px;
+    }
+
+    .quiz-container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 700px;
+      width: 100%;
+      padding: 30px;
+      margin-top: 20px;
+    }
+
+    #question {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    #answers {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #answers label {
+      background: #fef5e7;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #answers input[type="radio"] {
+      display: none;
+    }
+
+    #answers input[type="radio"]:checked + span {
+      background: #d35400;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    #answers label:hover {
+      background: #fdebd0;
+      border-color: #f39c12;
+    }
+
+    .btn {
+      background: #e67e22;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .btn:disabled {
+      background-color: #f8c471;
+      cursor: not-allowed;
+    }
+
+    .result-box {
+      background: #fff0e0;
+      border: 2px solid #e67e22;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 30px;
+      display: none;
+    }
+
+    .joke-box {
+      background: #fef9e7;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+      margin-top: 40px;
+      max-width: 700px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Food Quiz</h1>
+
+  <section class="quiz-container">
+    <div id="question">Loading question...</div>
+    <form id="answers"></form>
+    <button class="btn" id="submit-btn" onclick="submitQuiz(event)" disabled>Next</button>
+    <div class="result-box" id="scoreboard"></div>
+  </section>
+
+  <section class="joke-box">
+    <h2>Food Joke</h2>
+    <div id="joke-section">Loading a food joke...</div>
+  </section>
+
+  <script>
+    const foodQuestions = [
+      { question: "Which vitamin is most abundant in oranges?", options: ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin B12"], correct: "Vitamin C" },
+      { question: "What is sushi traditionally wrapped in?", options: ["Lettuce", "Rice paper", "Seaweed", "Plastic"], correct: "Seaweed" },
+      { question: "Which country is famous for croissants?", options: ["Germany", "France", "Italy", "Spain"], correct: "France" },
+      { question: "Which of these is not a dairy product?", options: ["Cheese", "Yogurt", "Butter", "Tofu"], correct: "Tofu" },
+      { question: "What is the main ingredient in guacamole?", options: ["Tomato", "Avocado", "Pepper", "Lime"], correct: "Avocado" }
+    ];
+
+    const foodJokes = [
+      "Why did the tomato blush? Because it saw the salad dressing!",
+      "I only eat tacos on days that end in 'y'.",
+      "Did you hear about the Italian chef who died? He pasta way.",
+      "I’m on a seafood diet. I see food and I eat it.",
+      "Why don’t eggs tell each other secrets? Because they might crack up!",
+      "What do you call cheese that isn't yours? Nacho cheese!",
+      "Lettuce turnip the beet!"
+    ];
+
+    let currentIndex = 0;
+    let userAnswers = Array(foodQuestions.length).fill(null);
+
+    const questionEl = document.getElementById('question');
+    const answersEl = document.getElementById('answers');
+    const submitBtn = document.getElementById('submit-btn');
+    const scoreboard = document.getElementById('scoreboard');
+    const jokeSection = document.getElementById('joke-section');
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadQuestion() {
+      const q = foodQuestions[currentIndex];
+      questionEl.textContent = `Q${currentIndex + 1}. ${q.question}`;
+      answersEl.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const id = `opt-${currentIndex}-${i}`;
+        const checked = userAnswers[currentIndex] === opt ? 'checked' : '';
+        const label = document.createElement('label');
+        label.setAttribute('for', id);
+        label.innerHTML = `
+          <input type="radio" name="answer" id="${id}" value="${opt}" ${checked} />
+          <span>${opt}</span>
+        `;
+        answersEl.appendChild(label);
+      });
+
+      submitBtn.textContent = currentIndex === foodQuestions.length - 1 ? 'Finish' : 'Next';
+      submitBtn.disabled = !userAnswers[currentIndex];
+    }
+
+    answersEl.addEventListener('change', e => {
+      if (e.target.name === 'answer') {
+        userAnswers[currentIndex] = e.target.value;
+        submitBtn.disabled = false;
+      }
+    });
+
+    function submitQuiz(event) {
+      event.preventDefault();
+      if (!userAnswers[currentIndex]) return;
+
+      if (currentIndex < foodQuestions.length - 1) {
+        currentIndex++;
+        loadQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      let correctCount = 0;
+      const resultHTML = foodQuestions.map((q, i) => {
+        const userAnswer = userAnswers[i] || 'No Answer';
+        const isCorrect = userAnswer === q.correct;
+        if (isCorrect) correctCount++;
+        return `<p><strong>Q${i + 1}:</strong> ${q.question}<br> Your answer: <span style="color:${isCorrect ? 'green' : 'red'}">${userAnswer}</span><br> Correct answer: <strong>${q.correct}</strong></p>`;
+      }).join('<hr>');
+
+      scoreboard.innerHTML = `<h3>You scored ${correctCount} out of ${foodQuestions.length}</h3><hr>` + resultHTML;
+      scoreboard.style.display = 'block';
+      questionEl.style.display = 'none';
+      answersEl.style.display = 'none';
+      submitBtn.style.display = 'none';
+    }
+
+    function loadJoke() {
+      const index = Math.floor(Math.random() * foodJokes.length);
+      jokeSection.textContent = foodJokes[index];
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      shuffle(foodQuestions);
+      loadQuestion();
+      loadJoke();
+    });
+  </script>
+</body>
+</html>
